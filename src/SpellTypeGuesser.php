@@ -29,6 +29,12 @@ class SpellTypeGuesser
         // 'pa-braav',
         // 'pa-khornettoh',
     ];
+    private const PACK_MAPPING = [
+        'metamorpohose' => 'meta',
+        'thermodynamique' => 'termo',
+        'invocation' => 'invocateur',
+        'necromancie' => 'necro',
+    ];
 
     public function guess(string $filename): string
     {
@@ -39,5 +45,10 @@ class SpellTypeGuesser
         }
 
         throw new \InvalidArgumentException(sprintf('Impossible de détecter le type du sort du fichier %s', $filename));
+    }
+
+    public function asPackName(string $type): string
+    {
+        return self::PACK_MAPPING[$type] ?? $type;
     }
 }

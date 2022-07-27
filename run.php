@@ -6,6 +6,7 @@ use App\Extractor;
 use App\SpellFormatter;
 use App\SpellSerializer;
 use App\SpellTypeGuesser;
+use App\TestFormatter;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -44,7 +45,10 @@ use Symfony\Component\Serializer\Serializer;
         }
 
         $extractor = new Extractor();
-        $serializer = new SpellSerializer(new Serializer([new ObjectNormalizer()], [new JsonEncoder()]));
+        $serializer = new SpellSerializer(
+            new Serializer([new ObjectNormalizer()], [new JsonEncoder()]),
+            new TestFormatter()
+        );
         $typeGuesser = new SpellTypeGuesser();
 
         /** @var SplFileInfo $pdf */
@@ -71,7 +75,7 @@ use Symfony\Component\Serializer\Serializer;
             }
 
             $io->info('Génération du fichier pack');
-            file_put_contents(sprintf('%ssorts-%s.db', $packsDirectory, $spellType), $pack);
+            file_put_contents(sprintf('%s/sorts-%s.db', rtrim($packsDirectory, '/'), $typeGuesser->asPackName($spellType)), $pack);
         }
 
         $io->title('Traitement terminé !');

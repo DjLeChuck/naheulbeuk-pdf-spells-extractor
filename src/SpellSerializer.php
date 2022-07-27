@@ -7,9 +7,13 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class SpellSerializer
 {
-    public function __construct(SerializerInterface $serializer)
+    private SerializerInterface $serializer;
+    private TestFormatter $testFormatter;
+
+    public function __construct(SerializerInterface $serializer, TestFormatter $testFormatter)
     {
         $this->serializer = $serializer;
+        $this->testFormatter = $testFormatter;
     }
 
     public function serialize(Spell $spell): string
@@ -24,12 +28,12 @@ class SpellSerializer
                 'img' => '',
                 'spellLevel' => $spell->level,
                 'type' => $spell->type,
-                'cout' => $spell->cost,
-                'incantation' => $spell->castingTime,
-                'duree' => $spell->spellDuration,
-                'portee' => $spell->cost,
-                'epreuve' => $spell->test,
-                'degat' => $spell->damage,
+                'cout' => $this->lower($spell->cost),
+                'incantation' => $this->lower($spell->castingTime ?? '-'),
+                'duree' => $this->lower($spell->spellDuration ?? '-'),
+                'portee' => $this->lower($spell->scope ?? '-'),
+                'epreuve' => $this->getConvertedTest($spell->test),
+                'degat' => $this->lower($spell->damage ?? '-'),
                 'effet' => '',
                 'name1' => '',
                 'name2' => '',
@@ -61,5 +65,19 @@ class SpellSerializer
     private function generateId(): string
     {
         return mb_substr(str_replace('.', '', uniqid('', true)), 0, 16);
+    }
+
+    private function getConvertedTest(?string $test): string
+    {
+        if (null === $test || 'non' === $this->lower($test)) {
+            return '-';
+        }
+
+        return $this->testFormatter->format($test);
+    }
+
+    public function lower(string $value): string
+    {
+        return mb_convert_case($value, MB_CASE_LOWER);
     }
 }

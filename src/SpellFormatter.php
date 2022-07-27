@@ -28,6 +28,9 @@ class SpellFormatter
 
     public function format(): Spell
     {
+        // Retrait de la première ligne (correspond au pied de page)
+        array_shift($this->lines);
+
         $this->setLevel();
         $this->setName();
         $this->setCost();
@@ -43,9 +46,45 @@ class SpellFormatter
 
     private function setLevel(): void
     {
-        $levelStr = array_shift($this->lines);
+        /*
+         * Le niveau se trouve potentiellement à 3 endroits :
+         *  - en dernière ligne
+         *  - en première ligne
+         *  - en seconde ligne (la première étant le nom du sort dans ces cas là)
+         */
+
+        $levelStr = null;
+
+        // Dernière ligne
+        if (str_starts_with(end($this->lines), 'Niveau ')) {
+            $levelStr = array_pop($this->lines);
+        }
+
+        // Remise du pointeur au début
+        reset($this->lines);
+
+        // Première ligne
+        if (null === $levelStr && str_starts_with(current($this->lines), 'Niveau ')) {
+            $levelStr = array_shift($this->lines);
+        }
+
+        // Seconde ligne
+        if (null === $levelStr) {
+            $tmp = array_shift($this->lines);
+
+            if (str_starts_with(current($this->lines), 'Niveau ')) {
+                $levelStr = array_shift($this->lines);
+            }
+
+            reset($this->lines);
+            array_unshift($this->lines, $tmp);
+        }
+
+        // Remise du pointeur au début
+        reset($this->lines);
+
         $matches = [];
-        preg_match('`^Niveau (\d+)$`', $levelStr, $matches);
+        preg_match('`^Niveau (\d+)$`', $levelStr ?? '', $matches);
 
         if (!isset($matches[1])) {
             throw new \InvalidArgumentException('Impossible de déterminer le niveau du sort.');
@@ -126,10 +165,6 @@ class SpellFormatter
     private function setDescription(): void
     {
         $description = '<p>';
-
-        // Retrait des 2 dernières lignes (caractère vide + livre et n° de page)
-        array_pop($this->lines);
-        array_pop($this->lines);
 
         foreach ($this->lines as $line) {
             if ($this->needNewLine($line)) {
