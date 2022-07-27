@@ -58,16 +58,8 @@ use Symfony\Component\Serializer\Serializer;
             foreach ($extractor->splitPdf($pdf) as $page) {
                 $io->writeln(sprintf('<info>Traitement de la page %s</info>', $page->getFilename()));
 
-                $content = $extractor->processPage($page);
-
-                if (!str_starts_with($content, 'Niveau ')) {
-                    $io->warning(sprintf('Le contenu ne commence pas par "Niveau", on ignore.'));
-
-                    continue;
-                }
-
                 try {
-                    $formatter = new SpellFormatter($content, $spellType);
+                    $formatter = new SpellFormatter($extractor->processPage($page), $spellType);
                     $spell = $formatter->format();
                 } catch (\Throwable $e) {
                     $io->error($e->getMessage());

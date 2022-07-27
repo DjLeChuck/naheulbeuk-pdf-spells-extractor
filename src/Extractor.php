@@ -55,7 +55,7 @@ class Extractor
     public function processPage(\SplFileInfo $page): string
     {
         $file = $this->tmpDirectory.'/'.$page->getBasename($page->getExtension()).'txt';
-        $process = new Process(['pdftotext', $page->getPathname(), $file]);
+        $process = new Process(['pdftotext', '-nopgbrk', $page->getPathname(), $file]);
 
         $process->mustRun();
 

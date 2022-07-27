@@ -47,6 +47,10 @@ class SpellFormatter
         $matches = [];
         preg_match('`^Niveau (\d+)$`', $levelStr, $matches);
 
+        if (!isset($matches[1])) {
+            throw new \InvalidArgumentException('Impossible de déterminer le niveau du sort.');
+        }
+
         $this->spell->level = (int) $matches[1];
     }
 
@@ -141,6 +145,9 @@ class SpellFormatter
         array_shift($terms);
         $patterns = array_map(static fn(string $term) => '/'.$term.'/', $terms);
         $description = preg_replace($patterns, '<strong>$0</strong>', $description);
+
+        // Séparation entre description courte et le reste
+        $description = preg_replace('/<p><strong>(Usages|Caractéristiques) :<\/strong><\/p>/', "<hr />\n$0", $description);
 
         $this->spell->description = $description;
     }
