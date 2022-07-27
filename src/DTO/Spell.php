@@ -9,9 +9,9 @@ class Spell
     public string $type;
     public string $description;
     public string $cost;
-    public string $castingTime;
-    public ?string $spellDuration;
+    public ?string $castingTime = null;
+    public ?string $spellDuration = null;
     public string $test;
-    public ?string $scope;
-    public ?string $damage;
+    public ?string $scope = null;
+    public ?string $damage = null;
 }
