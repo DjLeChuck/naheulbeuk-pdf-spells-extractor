@@ -6,30 +6,12 @@ use App\DTO\Spell;
 
 class SpellFormatter
 {
-    private const SPELL_TYPES = [
-        'generaliste',
-        'combat',
-        'domestique',
-        'feu',
-        'metamorphose',
-        'thermodynamique',
-        'invocation',
-        'necromancie',
-        'illusion',
-        'eau',
-        'terre',
-        'air',
-        'tzinntch',
-        'pr-niourgl',
-        'pr-dlul',
-        'pr-youclidh',
-        'pr-slanoush',
-        'pr-adathie',
-        'pa-niourgl',
-        'pa-slanoush',
-        'pa-dlul',
-        'pa-braav',
-        'pa-khornettoh',
+    private const NEW_LINE_TERMS = [
+        '- ', 'Usages :', 'Caractéristiques :', 'Durée d’incantation :', 'Durée d’invocation :',
+        'Coût', 'Coût du rituel :', 'Coût d’invocation :', 'Durée du sort :', 'Dégâts :',
+        'Épreuve :', 'Épreuve d’appel :', 'Épreuve de contrôle :', 'Épreuve de révocation :',
+        'Portée :', 'Mot de pouvoir :', 'Notes diverses :', 'Échec critique :', 'Réussite critique :',
+        'Effets :', 'Bénéfices :', 'Restrictions :',
     ];
 
     private string $content;
@@ -41,8 +23,7 @@ class SpellFormatter
         $this->content = $content;
         $this->lines = array_filter(explode("\n", $this->content));
         $this->spell = new Spell();
-
-        $this->setType($type);
+        $this->spell->type = $type;
     }
 
     public function format(): Spell
@@ -58,12 +39,6 @@ class SpellFormatter
         $this->setDescription();
 
         return $this->spell;
-    }
-
-    private function setType(string $type): void
-    {
-        // @todo selon le libellé du PDF
-        $this->spell->type = current(self::SPELL_TYPES);
     }
 
     private function setLevel(): void
@@ -86,7 +61,7 @@ class SpellFormatter
         preg_match('`Coût(?: d’invocation)? : (.*)`u', $this->content, $matches);
 
         if (empty($matches)) {
-            throw new \InvalidArgumentException('Can not determine spell cost.');
+            throw new \InvalidArgumentException('Impossible de déterminer le coût du sort.');
         }
 
         $this->spell->cost = $matches[1];
@@ -118,7 +93,7 @@ class SpellFormatter
         preg_match('`Épreuve(?: d’appel)? : (.*)`u', $this->content, $matches);
 
         if (empty($matches)) {
-            throw new \InvalidArgumentException('Can not determine spell test.');
+            throw new \InvalidArgumentException('Impossible de déterminer l\'épreuve du sort.');
         }
 
         $this->spell->test = $matches[1];
@@ -144,26 +119,40 @@ class SpellFormatter
         }
     }
 
-    public function setDescription(): void
+    private function setDescription(): void
     {
         $description = '<p>';
 
-        while (!\in_array(current($this->lines), ['Usages :', 'Caractéristiques :'], true)) {
-            $description .= ' '.array_shift($this->lines);
+        // Retrait des 2 dernières lignes (caractère vide + livre et n° de page)
+        array_pop($this->lines);
+        array_pop($this->lines);
+
+        foreach ($this->lines as $line) {
+            if ($this->needNewLine($line)) {
+                $description .= "</p>\n<p>";
+            } elseif (!str_starts_with($line, ' ')) {
+                $description .= ' ';
+            }
+
+            $description .= $line;
         }
 
-        $description .= <<<HTML
-</p>
-<hr />
-<p>
-HTML;
-
-        $description .= '<strong>'.array_shift($this->lines).'</strong></p>';
-
-        while (str_starts_with(current($this->lines), '- ')) {
-            $description .= sprintf('<p>%s</p>', array_shift($this->lines));
-        }
+        $terms = self::NEW_LINE_TERMS;
+        array_shift($terms);
+        $patterns = array_map(static fn(string $term) => '/'.$term.'/', $terms);
+        $description = preg_replace($patterns, '<strong>$0</strong>', $description);
 
         $this->spell->description = $description;
+    }
+
+    private function needNewLine(string $line): bool
+    {
+        foreach (self::NEW_LINE_TERMS as $term) {
+            if (str_starts_with($line, $term)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
