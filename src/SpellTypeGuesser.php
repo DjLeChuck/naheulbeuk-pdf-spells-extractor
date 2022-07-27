@@ -30,8 +30,8 @@ class SpellTypeGuesser
         // 'pa-khornettoh',
     ];
     private const PACK_MAPPING = [
-        'metamorpohose' => 'meta',
-        'thermodynamique' => 'termo',
+        'metamorphose' => 'meta',
+        'thermodynamique' => 'thermo',
         'invocation' => 'invocateur',
         'necromancie' => 'necro',
     ];
